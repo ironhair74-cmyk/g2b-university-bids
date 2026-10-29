@@ -62,7 +62,21 @@ EXCLUDE = ["청소", "경비", "미화", "시설관리", "급식", "식당", "�
            "촬영", "영상", "콘텐츠", "프로그램운영", "교육운영", "운영지원", "위탁운영",
            "운영위탁", "합성", "시험법", "부품", "조립", "프로토타입", "인허가", "시설검사",
            "안전점검", "숙식", "환경조성", "실습실"]
-SHORT_EN = {"ISP", "ISMP", "BPR", "AX", "AI", "DX", "RISE"}
+# ---- AX·DX 공고 (점수·등급과 별도로 모아 보여줌) --------------------------
+AX_TERMS = ["AX", "AI", "DX", "인공지능", "디지털전환", "생성형", "LLM", "에이전트",
+            "Agent", "에듀테크", "LXP", "LMS", "빅데이터", "데이터레이크", "DataLake",
+            "디지털트윈", "메타버스", "클라우드", "지능형", "스마트캠퍼스", "스마트병원",
+            "챗봇", "AID"]
+AX_TYPES = [   # 위에서부터 먼저 맞는 유형 하나로 분류
+    ("전략·진단", ["전략", "진단", "컨설팅", "로드맵", "ISP", "ISMP", "체계", "방안수립",
+                 "마스터플랜", "기본계획", "타당성"]),
+    ("인프라·데이터", ["주권AI", "데이터센터", "GPU", "클라우드", "DataLake", "데이터레이크"]),
+    ("교육·학사 플랫폼", ["LXP", "LMS", "학습", "학사", "학생", "튜터", "에듀테크", "교육과정",
+                     "강좌", "Advisor", "면접", "원격교육", "교과"]),
+    ("인프라·데이터", ["데이터", "인프라", "네트워크", "디지털트윈"]),
+    ("행정·업무 시스템", ["행정", "업무", "포털", "그룹웨어", "시스템"]),
+]
+SHORT_EN = {"ISP", "ISMP", "BPR", "AX", "AI", "DX", "RISE", "LLM", "LXP", "LMS", "AID"}
 HEALTH_HINT = ["병원", "의료원", "보건"]
 # '과학기술원' 검색에 함께 잡히지만 대학이 아닌 기관
 NON_UNIV = ["한국해양과학기술원"]
@@ -193,6 +207,22 @@ def budget_of(item: dict) -> int:
     return to_int(item.get("asignBdgtAmt")) or to_int(item.get("presmptPrce"))
 
 
+def ax_type(item: dict) -> str:
+    """AX·DX 관련이면 유형을, 아니면 빈 문자열을 돌려준다.
+    제외어(시설·행사·운영대행 등)에 걸린 공고는 AX 단어가 있어도 넣지 않는다."""
+    title = item.get("bidNtceNm", "")
+    ns = re.sub(r"\s+", "", title)
+    if not any(has(t, title, ns) for t in AX_TERMS):
+        return ""
+    ns_x = ns.replace("운영체계", "체계")
+    if any(k in ns_x for k in EXCLUDE):
+        return ""
+    for label, words in AX_TYPES:   # 같은 라벨이 두 번 나오면 강한 신호가 먼저
+        if any(has(w, title, ns) for w in words):
+            return label
+    return "기타"
+
+
 def grade(s: int) -> str:
     return "A" if s >= 5 else "B" if s >= 2 else "C"
 
@@ -257,6 +287,7 @@ def build_rows(items: list[dict], min_budget: int, include_closed: bool,
             "수요기관": it.get("dminsttNm", ""),
             "공고기관": it.get("ntceInsttNm", ""),
             "구분": track,
+            "AX·DX": ax_type(it),
             "예산(원)": b,
             "환산MM": round(b / unit_price, 1) if unit_price else "",
             "계약방법": it.get("cntrctCnclsMthdNm", ""),
@@ -311,6 +342,29 @@ def write_md(rows: list[dict], path: Path, days: int, raw_n: int) -> None:
         return t + [""]
     lines += table(a)
     lines += ["## B등급 — 관심 공고", ""] + table(b)
+    ax = sorted([r for r in rows if r["AX·DX"]], key=lambda r: -r["예산(원)"])
+    lines += [f"## AX·DX 관련 공고 ({len(ax)}건, 예산순)", "",
+              "등급과 상관없이 AI·DX·데이터·학습플랫폼 관련 공고를 모았습니다. "
+              "구축(SI) 사업이 많아 직접 수주 대상은 적지만, 대학들이 AX에 어디에 "
+              "얼마를 쓰는지 보여주는 시장 신호입니다.", ""]
+    if ax:
+        by_type: dict[str, list] = {}
+        for r in ax:
+            by_type.setdefault(r["AX·DX"], []).append(r)
+        lines += ["| 유형 | 건수 | 예산 합계 |", "|---|---:|---:|"]
+        for label in dict.fromkeys([t for t, _ in AX_TYPES] + ["기타"]):
+            g = by_type.get(label, [])
+            if g:
+                lines.append(f"| {label} | {len(g)} | {won(sum(r['예산(원)'] for r in g))} |")
+        lines += ["", "| 유형 | 등급 | 공고명 | 수요기관 | 예산 | 마감 |",
+                  "|---|---|---|---|---:|---|"]
+        for r in ax:
+            name = f"[{r['공고명']}]({r['링크']})" if r["링크"] else r["공고명"]
+            lines.append(f"| {r['AX·DX']} | {r['등급']} | {name} | {r['수요기관']} | "
+                         f"{won(r['예산(원)'])} | {r['마감일시'][:10]} {r['마감임박']} |")
+        lines.append("")
+    else:
+        lines += ["해당 없음", ""]
     lines += ["## 참고", "",
               "- C등급(시설·구매·행사·운영대행 등 비컨설팅)은 CSV에만 포함했습니다.",
               "- ⚠️ = 마감 7일 이내. 마감일이 비어 있으면 API에 값이 없는 공고입니다.",
@@ -352,6 +406,7 @@ def main() -> int:
     summary = {"raw": len(items), "kept": len(rows),
                "A": sum(r["등급"] == "A" for r in rows),
                "B": sum(r["등급"] == "B" for r in rows),
+               "AX_DX": sum(bool(r["AX·DX"]) for r in rows),
                "csv": str(csv_p), "md": str(md_p)}
     print(json.dumps(summary, ensure_ascii=False))
     return 0
