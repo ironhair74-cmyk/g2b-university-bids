@@ -40,17 +40,32 @@ UNIT_PRICE_PER_MM = 35_000_000   # 1MM 평균단가 (기본값, --unit-price로 
 INSTITUTION_TERMS = ["대학", "과학기술원"]
 
 # ---- 적합도 사전 (references/scoring.md 와 동일하게 유지) -------------------
+# 매칭은 공고명에서 띄어쓰기를 지운 뒤 한다 ("방안 수립" = "방안수립").
+# 영문 약어는 단어 단위로만 매칭한다 (KAIST 안의 'AI'는 매칭하지 않음).
 HIGH = ["중장기", "발전계획", "발전전략", "전략수립", "컨설팅", "ISP", "ISMP", "BPR",
-        "AX", "AI", "인공지능", "디지털전환", "DX", "혁신", "글로컬", "RISE", "라이즈",
-        "구조개혁", "재정", "조직진단", "경영진단", "타당성", "마스터플랜", "로드맵",
-        "평가", "인증", "대학기관평가", "성과관리", "정책연구"]
-MID = ["연구용역", "학술용역", "용역", "기획", "설계", "분석", "진단", "개선방안",
-       "정보화", "플랫폼", "데이터", "스마트캠퍼스"]
+        "조직진단", "경영진단", "수준진단", "타당성", "마스터플랜", "로드맵", "구조개혁",
+        "재정", "성과관리", "성과평가", "기관평가", "정책연구", "체계", "방안수립",
+        "거버넌스", "중장기계획"]
+HIGH_REGEX = {"전략": r"전략(?!산업)"}          # '전략산업'(인력양성 사업명)은 제외
+MID = ["연구", "학술", "기획", "분석", "진단", "개선방안", "정보화", "플랫폼", "데이터",
+       "스마트캠퍼스", "AX", "AI", "DX", "인공지능", "디지털전환", "혁신", "글로컬",
+       "RISE", "라이즈", "앵커", "조사"]
+# 시스템 구축(SI)형: 핵심 키워드가 없을 때만 감점
+SI = ["시스템구축", "구축용역", "고도화", "솔루션", "개발용역"]
 EXCLUDE = ["청소", "경비", "미화", "시설관리", "급식", "식당", "공사", "감리", "수선",
            "보수", "유지관리", "유지보수", "구매", "임차", "렌탈", "인쇄", "운송",
-           "방역", "소독", "폐기물", "조경", "전기안전", "승강기", "냉난방", "통학버스",
-           "보험", "행사대행", "번역"]
+           "방역", "소독", "폐기물", "조경", "전기안전", "승강기", "냉난방", "버스", "운행",
+           "보험", "대행", "번역", "행사", "축제", "축전", "현장운영", "페스티벌", "Festival", "박람회", "공유회",
+           "성과발표회", "컨퍼런스", "세미나", "학술대회", "전시", "부스", "연수", "인턴십",
+           "벤치마킹", "캠프", "경진대회", "공모전", "챌린지", "해커톤", "메이커톤", "세탁",
+           "린넨", "위탁검사", "검진", "콜센터", "채용", "회계감사", "결산", "정산", "특허",
+           "촬영", "영상", "콘텐츠", "프로그램운영", "교육운영", "운영지원", "위탁운영",
+           "운영위탁", "합성", "시험법", "부품", "조립", "프로토타입", "인허가", "시설검사",
+           "안전점검", "숙식", "환경조성", "실습실"]
+SHORT_EN = {"ISP", "ISMP", "BPR", "AX", "AI", "DX", "RISE"}
 HEALTH_HINT = ["병원", "의료원", "보건"]
+# '과학기술원' 검색에 함께 잡히지만 대학이 아닌 기관
+NON_UNIV = ["한국해양과학기술원"]
 
 
 def kst_now() -> datetime:
@@ -141,15 +156,27 @@ def to_int(v) -> int:
 
 def is_university(item: dict) -> bool:
     names = f"{item.get('dminsttNm','')} {item.get('ntceInsttNm','')}"
+    if any(n in names for n in NON_UNIV):
+        return False
     return any(t in names for t in INSTITUTION_TERMS)
+
+
+def has(word: str, title: str, title_ns: str) -> bool:
+    if word in SHORT_EN:
+        return re.search(rf"(?<![A-Za-z]){word}(?![A-Za-z])", title) is not None
+    return word in title_ns
 
 
 def score(item: dict) -> tuple[int, list[str], str]:
     title = item.get("bidNtceNm", "")
-    hits_h = [k for k in HIGH if k.lower() in title.lower()]
-    hits_m = [k for k in MID if k in title]
-    hits_x = [k for k in EXCLUDE if k in title]
-    s = 3 * len(hits_h) + len(hits_m) - 5 * len(hits_x)
+    ns = re.sub(r"\s+", "", title)
+    hits_h = [k for k in HIGH if has(k, title, ns)]
+    hits_h += [k for k, rx in HIGH_REGEX.items() if re.search(rx, ns)]
+    hits_m = [k for k in MID if has(k, title, ns)]
+    ns_x = ns.replace("운영체계", "체계")   # '프로그램 운영 체계 구축'은 운영대행이 아님
+    hits_x = [k for k in EXCLUDE if k in ns_x]
+    hits_si = [] if hits_h else [k for k in SI if k in ns]
+    s = 3 * len(hits_h) + len(hits_m) - 5 * len(hits_x) - 2 * len(hits_si)
     budget = budget_of(item)
     if budget >= 300_000_000:
         s += 2
@@ -158,7 +185,8 @@ def score(item: dict) -> tuple[int, list[str], str]:
     names = f"{item.get('dminsttNm','')} {item.get('ntceInsttNm','')}"
     track = "의료(대학병원)" if any(h in names for h in HEALTH_HINT) else (
         "국립대" if ("국립" in names or "서울대" in names or "과학기술원" in names) else "대학")
-    return s, hits_h + hits_m + [f"제외:{x}" for x in hits_x], track
+    return s, (hits_h + hits_m + [f"SI:{x}" for x in hits_si]
+               + [f"제외:{x}" for x in hits_x]), track
 
 
 def budget_of(item: dict) -> int:
@@ -170,7 +198,8 @@ def grade(s: int) -> str:
 
 
 def dedupe(items: list[dict]) -> list[dict]:
-    """같은 공고번호는 차수가 가장 높은 것(정정공고 최신본)만 남긴다."""
+    """1) 같은 공고번호는 차수가 가장 높은 것(정정공고 최신본)만 남긴다.
+    2) 재공고처럼 번호가 달라도 공고명·수요기관이 같으면 가장 최근 공고만 남긴다."""
     best: dict[str, dict] = {}
     for it in items:
         no = it.get("bidNtceNo", "")
@@ -178,7 +207,31 @@ def dedupe(items: list[dict]) -> list[dict]:
             continue
         if no not in best or to_int(it.get("bidNtceOrd")) > to_int(best[no].get("bidNtceOrd")):
             best[no] = it
-    return list(best.values())
+    by_title: dict[tuple, dict] = {}
+    for it in best.values():
+        name = re.sub(r"\(?재공고\)?|\[재공고\]|\s+", "", it.get("bidNtceNm", ""))
+        k = (name, it.get("dminsttNm", ""))
+        cur = by_title.get(k)
+        if cur is None or (it.get("bidNtceDt", ""), it.get("bidNtceNo", "")) > \
+                (cur.get("bidNtceDt", ""), cur.get("bidNtceNo", "")):
+            by_title[k] = it
+    return list(by_title.values())
+
+
+def close_of(item: dict) -> str:
+    """입찰마감일시. 비어 있으면 개찰일시로 대신하고 표시한다."""
+    c = (item.get("bidClseDt") or "").strip()
+    if c:
+        return c
+    o = (item.get("opengDt") or "").strip()
+    return f"{o} (개찰)" if o else ""
+
+
+def _days_left(close: str, now: datetime):
+    try:
+        return (datetime.strptime(close[:16], "%Y-%m-%d %H:%M") - now).days
+    except ValueError:
+        return None
 
 
 def build_rows(items: list[dict], min_budget: int, include_closed: bool,
@@ -189,7 +242,7 @@ def build_rows(items: list[dict], min_budget: int, include_closed: bool,
         b = budget_of(it)
         if b < min_budget:
             continue
-        close = it.get("bidClseDt", "")
+        close = close_of(it)
         try:
             closed = datetime.strptime(close[:16], "%Y-%m-%d %H:%M") < now
         except ValueError:
@@ -209,6 +262,8 @@ def build_rows(items: list[dict], min_budget: int, include_closed: bool,
             "계약방법": it.get("cntrctCnclsMthdNm", ""),
             "공고일시": it.get("bidNtceDt", ""),
             "마감일시": close,
+            "마감임박": "⚠️" if close and _days_left(close, now) is not None
+                        and 0 <= _days_left(close, now) < 7 else "",
             "공고번호": f"{it.get('bidNtceNo','')}-{it.get('bidNtceOrd','')}",
             "매칭키워드": ", ".join(hits),
             "링크": it.get("bidNtceDtlUrl", ""),
@@ -252,12 +307,13 @@ def write_md(rows: list[dict], path: Path, days: int, raw_n: int) -> None:
         for r in rs:
             name = f"[{r['공고명']}]({r['링크']})" if r["링크"] else r["공고명"]
             t.append(f"| {name} | {r['수요기관']} | {won(r['예산(원)'])} | "
-                     f"{r['환산MM']} | {r['마감일시'][:10]} | {r['매칭키워드']} |")
+                     f"{r['환산MM']} | {r['마감일시'][:10]} {r['마감임박']} | {r['매칭키워드']} |")
         return t + [""]
     lines += table(a)
     lines += ["## B등급 — 관심 공고", ""] + table(b)
     lines += ["## 참고", "",
-              "- C등급(시설·구매 등 비컨설팅)은 CSV에만 포함했습니다.",
+              "- C등급(시설·구매·행사·운영대행 등 비컨설팅)은 CSV에만 포함했습니다.",
+              "- ⚠️ = 마감 7일 이내. 마감일이 비어 있으면 API에 값이 없는 공고입니다.",
               "- 환산MM = 예산 ÷ 1MM 단가. 실제 투입 가능 MM은 경비·부가세를 빼고 다시 보세요.",
               "- 점수는 공고명 키워드 기반 1차 선별입니다. 제안요청서 원문 확인이 필요합니다.", ""]
     path.write_text("\n".join(lines), encoding="utf-8")
