@@ -1,0 +1,142 @@
+{
+  "_note": "가상 샘플 데이터입니다. 실제 공고가 아닙니다.",
+  "response": {
+    "header": {
+      "resultCode": "00",
+      "resultMsg": "정상"
+    },
+    "body": {
+      "items": [
+        {
+          "bidNtceNo": "R26BK00000001",
+          "bidNtceOrd": "000",
+          "bidNtceNm": "○○국립대학교 2027-2031 중장기 발전계획 수립 연구용역",
+          "dminsttNm": "○○국립대학교",
+          "ntceInsttNm": "○○국립대학교",
+          "asignBdgtAmt": "450000000",
+          "presmptPrce": "409090909",
+          "bidNtceDt": "2026-10-20 10:00:00",
+          "bidClseDt": "2026-11-10 10:00:00",
+          "cntrctCnclsMthdNm": "협상에 의한 계약",
+          "ntceKindNm": "등록공고",
+          "bidNtceDtlUrl": "https://www.g2b.go.kr/link/R26BK00000001"
+        },
+        {
+          "bidNtceNo": "R26BK00000002",
+          "bidNtceOrd": "000",
+          "bidNtceNm": "△△대학교 AX 전환 로드맵 및 ISP 수립 용역",
+          "dminsttNm": "△△대학교",
+          "ntceInsttNm": "△△대학교",
+          "asignBdgtAmt": "280000000",
+          "presmptPrce": "254545454",
+          "bidNtceDt": "2026-10-22 09:00:00",
+          "bidClseDt": "2026-11-12 10:00:00",
+          "cntrctCnclsMthdNm": "협상에 의한 계약",
+          "ntceKindNm": "등록공고",
+          "bidNtceDtlUrl": "https://www.g2b.go.kr/link/R26BK00000002"
+        },
+        {
+          "bidNtceNo": "R26BK00000002",
+          "bidNtceOrd": "001",
+          "bidNtceNm": "△△대학교 AX 전환 로드맵 및 ISP 수립 용역(정정)",
+          "dminsttNm": "△△대학교",
+          "ntceInsttNm": "△△대학교",
+          "asignBdgtAmt": "300000000",
+          "presmptPrce": "272727272",
+          "bidNtceDt": "2026-10-24 09:00:00",
+          "bidClseDt": "2026-11-14 10:00:00",
+          "cntrctCnclsMthdNm": "협상에 의한 계약",
+          "ntceKindNm": "등록공고",
+          "bidNtceDtlUrl": "https://www.g2b.go.kr/link/R26BK00000002"
+        },
+        {
+          "bidNtceNo": "R26BK00000003",
+          "bidNtceOrd": "000",
+          "bidNtceNm": "□□대학교 RISE 사업 성과관리 체계 구축 컨설팅",
+          "dminsttNm": "□□대학교 산학협력단",
+          "ntceInsttNm": "조달청 대구지방조달청",
+          "asignBdgtAmt": "150000000",
+          "presmptPrce": "136363636",
+          "bidNtceDt": "2026-10-23 14:00:00",
+          "bidClseDt": "2026-11-06 10:00:00",
+          "cntrctCnclsMthdNm": "협상에 의한 계약",
+          "ntceKindNm": "등록공고",
+          "bidNtceDtlUrl": "https://www.g2b.go.kr/link/R26BK00000003"
+        },
+        {
+          "bidNtceNo": "R26BK00000004",
+          "bidNtceOrd": "000",
+          "bidNtceNm": "◇◇대학교 2027년 청소 및 미화 용역",
+          "dminsttNm": "◇◇대학교",
+          "ntceInsttNm": "◇◇대학교",
+          "asignBdgtAmt": "1200000000",
+          "presmptPrce": "1090909090",
+          "bidNtceDt": "2026-10-21 11:00:00",
+          "bidClseDt": "2026-11-04 10:00:00",
+          "cntrctCnclsMthdNm": "제한경쟁",
+          "ntceKindNm": "등록공고",
+          "bidNtceDtlUrl": "https://www.g2b.go.kr/link/R26BK00000004"
+        },
+        {
+          "bidNtceNo": "R26BK00000005",
+          "bidNtceOrd": "000",
+          "bidNtceNm": "☆☆대학교병원 스마트병원 정보화 기본계획(ISMP) 수립",
+          "dminsttNm": "☆☆대학교병원",
+          "ntceInsttNm": "☆☆대학교병원",
+          "asignBdgtAmt": "220000000",
+          "presmptPrce": "199999999",
+          "bidNtceDt": "2026-10-25 10:00:00",
+          "bidClseDt": "2026-11-18 10:00:00",
+          "cntrctCnclsMthdNm": "협상에 의한 계약",
+          "ntceKindNm": "등록공고",
+          "bidNtceDtlUrl": "https://www.g2b.go.kr/link/R26BK00000005"
+        },
+        {
+          "bidNtceNo": "R26BK00000006",
+          "bidNtceOrd": "000",
+          "bidNtceNm": "◎◎시 도시재생 전략 수립 용역",
+          "dminsttNm": "◎◎시",
+          "ntceInsttNm": "◎◎시",
+          "asignBdgtAmt": "200000000",
+          "presmptPrce": "181818181",
+          "bidNtceDt": "2026-10-22 10:00:00",
+          "bidClseDt": "2026-11-10 10:00:00",
+          "cntrctCnclsMthdNm": "협상에 의한 계약",
+          "ntceKindNm": "등록공고",
+          "bidNtceDtlUrl": "https://www.g2b.go.kr/link/R26BK00000006"
+        },
+        {
+          "bidNtceNo": "R26BK00000007",
+          "bidNtceOrd": "000",
+          "bidNtceNm": "▽▽대학교 학술정보관 시설 유지보수 용역",
+          "dminsttNm": "▽▽대학교",
+          "ntceInsttNm": "▽▽대학교",
+          "asignBdgtAmt": "90000000",
+          "presmptPrce": "81818181",
+          "bidNtceDt": "2026-10-19 10:00:00",
+          "bidClseDt": "2026-11-03 10:00:00",
+          "cntrctCnclsMthdNm": "일반경쟁",
+          "ntceKindNm": "등록공고",
+          "bidNtceDtlUrl": "https://www.g2b.go.kr/link/R26BK00000007"
+        },
+        {
+          "bidNtceNo": "R26BK00000008",
+          "bidNtceOrd": "000",
+          "bidNtceNm": "◁◁과학기술원 데이터 기반 대학 경영진단 연구용역",
+          "dminsttNm": "◁◁과학기술원",
+          "ntceInsttNm": "◁◁과학기술원",
+          "asignBdgtAmt": "80000000",
+          "presmptPrce": "72727272",
+          "bidNtceDt": "2026-10-26 10:00:00",
+          "bidClseDt": "2026-11-09 10:00:00",
+          "cntrctCnclsMthdNm": "협상에 의한 계약",
+          "ntceKindNm": "등록공고",
+          "bidNtceDtlUrl": "https://www.g2b.go.kr/link/R26BK00000008"
+        }
+      ],
+      "numOfRows": 100,
+      "pageNo": 1,
+      "totalCount": 9
+    }
+  }
+}
