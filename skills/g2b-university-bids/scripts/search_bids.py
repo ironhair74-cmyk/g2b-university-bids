@@ -289,6 +289,7 @@ def build_rows(items: list[dict], min_budget: int, include_closed: bool,
             "구분": track,
             "AX·DX": ax_type(it),
             "예산(원)": b,
+            "예산(억원)": round(b / 100_000_000, 2),
             "환산MM": round(b / unit_price, 1) if unit_price else "",
             "계약방법": it.get("cntrctCnclsMthdNm", ""),
             "공고일시": it.get("bidNtceDt", ""),
@@ -314,7 +315,8 @@ def write_csv(rows: list[dict], path: Path) -> None:
 
 
 def won(n: int) -> str:
-    return f"{n/100_000_000:.1f}억" if n >= 100_000_000 else f"{n/10_000:,.0f}만"
+    """예산 표기: 억원 단위, 소수점 둘째 자리 (예: 4,500만원 → 0.45). 0원은 '-'."""
+    return f"{n/100_000_000:,.2f}" if n else "-"
 
 
 def write_md(rows: list[dict], path: Path, days: int, raw_n: int) -> None:
@@ -333,7 +335,7 @@ def write_md(rows: list[dict], path: Path, days: int, raw_n: int) -> None:
     def table(rs):
         if not rs:
             return ["해당 없음", ""]
-        t = ["| 공고명 | 수요기관 | 예산 | 환산MM | 마감 | 키워드 |",
+        t = ["| 공고명 | 수요기관 | 예산(억원) | 환산MM | 마감 | 키워드 |",
              "|---|---|---:|---:|---|---|"]
         for r in rs:
             name = f"[{r['공고명']}]({r['링크']})" if r["링크"] else r["공고명"]
@@ -351,12 +353,12 @@ def write_md(rows: list[dict], path: Path, days: int, raw_n: int) -> None:
         by_type: dict[str, list] = {}
         for r in ax:
             by_type.setdefault(r["AX·DX"], []).append(r)
-        lines += ["| 유형 | 건수 | 예산 합계 |", "|---|---:|---:|"]
+        lines += ["| 유형 | 건수 | 예산 합계(억원) |", "|---|---:|---:|"]
         for label in dict.fromkeys([t for t, _ in AX_TYPES] + ["기타"]):
             g = by_type.get(label, [])
             if g:
                 lines.append(f"| {label} | {len(g)} | {won(sum(r['예산(원)'] for r in g))} |")
-        lines += ["", "| 유형 | 등급 | 공고명 | 수요기관 | 예산 | 마감 |",
+        lines += ["", "| 유형 | 등급 | 공고명 | 수요기관 | 예산(억원) | 마감 |",
                   "|---|---|---|---|---:|---|"]
         for r in ax:
             name = f"[{r['공고명']}]({r['링크']})" if r["링크"] else r["공고명"]
@@ -368,6 +370,7 @@ def write_md(rows: list[dict], path: Path, days: int, raw_n: int) -> None:
     lines += ["## 참고", "",
               "- C등급(시설·구매·행사·운영대행 등 비컨설팅)은 CSV에만 포함했습니다.",
               "- ⚠️ = 마감 7일 이내. 마감일이 비어 있으면 API에 값이 없는 공고입니다.",
+              "- 예산 단위는 억원입니다 (배정예산 우선, 없으면 추정가격). '-'는 API에 금액이 없는 공고입니다.",
               "- 환산MM = 예산 ÷ 1MM 단가. 실제 투입 가능 MM은 경비·부가세를 빼고 다시 보세요.",
               "- 점수는 공고명 키워드 기반 1차 선별입니다. 제안요청서 원문 확인이 필요합니다.", ""]
     path.write_text("\n".join(lines), encoding="utf-8")
