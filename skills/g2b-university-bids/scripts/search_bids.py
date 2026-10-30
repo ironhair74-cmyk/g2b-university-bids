@@ -23,6 +23,7 @@ import os
 import re
 import sys
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
@@ -104,26 +105,42 @@ def call_api(key: str, begin: datetime, end: datetime, page: int,
     }
     if keyword:
         params["bidNtceNm"] = keyword
-    url = ENDPOINT + "?" + urllib.parse.urlencode(params, safe="")
+    key = key.strip().strip('"').strip("\u201c\u201d")   # 복사 시 섞인 공백·둥근따옴표 제거
+    params["serviceKey"] = key
+    query = urllib.parse.urlencode(params, safe="")
     last_err = None
-    for attempt in range(3):
-        try:
-            with urllib.request.urlopen(url, timeout=30) as r:
-                raw = r.read().decode("utf-8", errors="replace")
-            if raw.lstrip().startswith("<"):
-                # 인증 오류 등은 XML로 돌아옴
-                code = re.search(r"<returnReasonCode>(\d+)", raw)
-                msg = re.search(r"<returnAuthMsg>([^<]+)", raw)
-                raise RuntimeError(
-                    f"API 오류 코드 {code.group(1) if code else '?'}: "
-                    f"{msg.group(1) if msg else raw[:200]}")
-            return json.loads(raw)
-        except RuntimeError:
-            raise
-        except Exception as e:  # 네트워크 일시 오류 → 재시도
-            last_err = e
-            time.sleep(2 * (attempt + 1))
-    raise RuntimeError(f"API 호출 실패(3회 재시도): {last_err}")
+    auth_like = False
+    # http가 막힌 네트워크(일부 와이파이·iOS 앱)를 위해 https로도 시도
+    for base in (ENDPOINT, ENDPOINT.replace("http://", "https://", 1)):
+        for attempt in range(2):
+            req = urllib.request.Request(base + "?" + query,
+                                         headers={"User-Agent": "Mozilla/5.0 g2b-university-bids"})
+            try:
+                with urllib.request.urlopen(req, timeout=30) as r:
+                    raw = r.read().decode("utf-8", errors="replace")
+                if raw.lstrip().startswith("<"):
+                    # 인증 오류 등은 XML로 돌아옴
+                    code = re.search(r"<returnReasonCode>(\d+)", raw)
+                    msg = re.search(r"<returnAuthMsg>([^<]+)", raw)
+                    raise RuntimeError(
+                        f"API 오류 코드 {code.group(1) if code else '?'}: "
+                        f"{msg.group(1) if msg else raw[:200]}")
+                return json.loads(raw)
+            except RuntimeError:
+                raise
+            except urllib.error.HTTPError as e:
+                body = e.read().decode("utf-8", errors="replace")[:300]
+                auth_like = e.code in (401, 403)
+                last_err = f"HTTP {e.code} ({base.split(':')[0]}) 서버 응답: {body or e.reason}"
+                break                       # 4xx는 재시도해도 같으므로 다음 주소로
+            except Exception as e:          # 네트워크 일시 오류 → 재시도
+                last_err = f"{type(e).__name__}: {e}"
+                time.sleep(2 * (attempt + 1))
+    hint = ""
+    if auth_like:
+        hint = ("\n→ 인증키를 확인하세요: 공백·따옴표 없이 Decoding 키를 넣었는지, "
+                "활용신청이 '승인'인지, 키 길이가 맞는지(echo ${#G2B_SERVICE_KEY}).")
+    raise RuntimeError(f"API 호출 실패: {last_err}{hint}")
 
 
 def extract_items(payload: dict) -> tuple[list[dict], int]:
