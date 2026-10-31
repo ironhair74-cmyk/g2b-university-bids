@@ -93,10 +93,19 @@ python search_bids.py --sample ../../../examples/sample_response.json   # 키 �
 - 행사·연수·운영대행·병원 지원 업무를 제외어로 추가
 - '체계 구축'·'방안 수립'처럼 컨설팅형 표현을 핵심어로 추가
 
+## 매일 자동 실행 (GitHub Actions)
+
+`.github/workflows/daily-brief.yml`이 **평일 오전 7시 37분(KST)**에 GitHub 서버에서 스크립트를 실행합니다. 결과는 [`reports/`](reports/) 폴더에 커밋됩니다. PC를 켜 두지 않아도 됩니다.
+
+- 조회 기간: 평일은 최근 1일, 월요일은 주말을 포함해 3일
+- 수동 실행: 저장소 **Actions → 대학 발주 공고 데일리 브리프 → Run workflow**. 기간(일)을 직접 넣을 수 있습니다.
+- 결과 확인: 실행 기록의 Summary 화면에 브리프가 바로 표시됩니다.
+- 인증키: 저장소 **Settings → Secrets and variables → Actions**의 `G2B_SERVICE_KEY` (비공개)
+
 ## 한계와 다음 단계
 
 - 점수는 **공고명 키워드 기반**입니다. 제안요청서 본문 분석은 아직 하지 않습니다.
-- 다음 단계: 사전규격 공개(`getPublicPrcureThngInfoServcPPSSrch`) 조회를 추가해 본공고 전에 미리 포착하기, 매주 월요일 자동 실행
+- 다음 단계: 사전규격 공개(`getPublicPrcureThngInfoServcPPSSrch`) 조회를 추가해 본공고 전에 미리 포착하기
 
 ## 출처
 
