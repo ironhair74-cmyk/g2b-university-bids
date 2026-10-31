@@ -68,3 +68,14 @@ jobs:
             git commit -m "데일리 브리프 $(TZ=Asia/Seoul date +%Y-%m-%d)"
             git push
           fi
+
+      - name: 메일 발송
+        env:
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+        run: |
+          pip install -q markdown
+          python .github/scripts/send_brief_mail.py reports

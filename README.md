@@ -101,6 +101,16 @@ python search_bids.py --sample ../../../examples/sample_response.json   # 키 �
 - 수동 실행: 저장소 **Actions → 대학 발주 공고 데일리 브리프 → Run workflow**. 기간(일)을 직접 넣을 수 있습니다.
 - 결과 확인: 실행 기록의 Summary 화면에 브리프가 바로 표시됩니다.
 - 인증키: 저장소 **Settings → Secrets and variables → Actions**의 `G2B_SERVICE_KEY` (비공개)
+- **메일 수신**: 실행이 끝나면 브리프를 메일 본문(HTML 표)으로, CSV를 첨부로 보냅니다. 아래 Secret을 등록하면 켜지고, 없으면 발송 단계만 건너뜁니다.
+
+| Secret | 값 | 필수 |
+|---|---|---|
+| `MAIL_USERNAME` | 보내는 메일 계정 (네이버 아이디) | ✅ |
+| `MAIL_PASSWORD` | 메일 비밀번호 (2단계 인증 시 애플리케이션 비밀번호) | ✅ |
+| `MAIL_TO` | 받는 주소, 여러 명은 쉼표로 구분. 없으면 보내는 계정으로 | |
+| `SMTP_HOST` / `SMTP_PORT` | 기본 `smtp.naver.com` / `465`. Gmail은 `smtp.gmail.com` / `465` | |
+
+네이버 메일은 **환경설정 → POP3/IMAP 설정 → POP3/SMTP 사용: 사용함**으로 켜 두어야 발송됩니다.
 
 ## 한계와 다음 단계
 
